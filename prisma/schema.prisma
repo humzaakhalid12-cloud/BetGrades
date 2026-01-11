@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Bettor {
+  id         String   @id @default(uuid())
+  name       String
+  profileUrl String
+  createdAt  DateTime @default(now())
+  bets       Bet[]
+
+  @@map("bettors")
+}
+
+model Bet {
+  id            String   @id @default(uuid())
+  bettorId      String
+  placedAt      DateTime
+  description   String
+  sport         String?
+  oddsAmerican  Int
+  stakeUnits    Float
+  result        String   @default("PENDING") // PENDING, WIN, LOSS, PUSH, VOID
+  profitUnits   Float    @default(0)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  bettor        Bettor   @relation(fields: [bettorId], references: [id], onDelete: Cascade)
+
+  @@map("bets")
+}
