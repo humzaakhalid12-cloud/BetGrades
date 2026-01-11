@@ -172,8 +172,24 @@ Letter grades are assigned based on ROI:
 ## Vercel Deployment
 
 ### Prerequisites
-1. Set `DATABASE_URL` environment variable in Vercel dashboard
-2. Use PostgreSQL (SQLite is dev-only and won't work on Vercel's serverless environment)
+1. **PostgreSQL Database Required**: SQLite (`file:./prisma/dev.db`) is for local development only. Vercel's serverless environment is ephemeral and requires PostgreSQL.
+2. **Environment Variable**: You must set `DATABASE_URL` in Vercel's environment variables before deployment.
+
+### Setting Up DATABASE_URL
+
+**Option 1: Prisma Accelerate (Recommended for Vercel)**
+- Sign up at [Prisma Accelerate](https://www.prisma.io/data-platform/accelerate)
+- Get your connection string (format: `prisma+postgres://accelerate.prisma-data.net/?api_key=...`)
+- Add it to Vercel as `DATABASE_URL`
+
+**Option 2: Direct PostgreSQL Connection**
+- Use a PostgreSQL database provider (e.g., Supabase, Neon, Railway, AWS RDS)
+- Connection string format: `postgres://user:password@host:5432/database?sslmode=require`
+- Add it to Vercel as `DATABASE_URL`
+
+**Important Notes:**
+- **SQLite on Vercel is ephemeral**: If you use `DATABASE_URL="file:./prisma/dev.db"` on Vercel, your database will be wiped on every deployment. This is not suitable for production.
+- **Always use PostgreSQL** for Vercel deployments.
 
 ### Build Configuration
 - The `postinstall` script automatically runs `prisma generate` during build
@@ -181,14 +197,32 @@ Letter grades are assigned based on ROI:
 - No additional build configuration needed
 
 ### Environment Variables
-Add to Vercel project settings:
+Add to Vercel project settings (Settings → Environment Variables):
 - `DATABASE_URL`: Your PostgreSQL connection string (required)
+  - For Prisma Accelerate: `prisma+postgres://accelerate.prisma-data.net/?api_key=...`
+  - For direct PostgreSQL: `postgres://user:password@host:5432/database?sslmode=require`
 
 ### Deployment Steps
 1. Push code to GitHub
 2. Connect repository to Vercel
-3. Add `DATABASE_URL` environment variable in Vercel dashboard
+3. **Before deploying**, add `DATABASE_URL` environment variable in Vercel dashboard
 4. Deploy
+5. Verify deployment by checking that `/api/bettors` returns data (not 500 errors)
+
+### Troubleshooting Vercel Deployment
+
+**Issue:** Build fails with "DATABASE_URL environment variable is not set"
+- **Solution**: Ensure `DATABASE_URL` is set in Vercel's environment variables before building
+
+**Issue:** App returns 500 errors after deployment
+- **Solution**: 
+  1. Check Vercel logs for database connection errors
+  2. Verify `DATABASE_URL` is correctly set in Vercel environment variables
+  3. Ensure you're using PostgreSQL (not SQLite) for Vercel
+  4. Test the database connection string locally if possible
+
+**Issue:** Database is empty after deployment
+- **Solution**: Run migrations on your PostgreSQL database. You may need to connect to your database directly and run `npx prisma migrate deploy` or use your database provider's migration tools.
 
 ## Notes
 

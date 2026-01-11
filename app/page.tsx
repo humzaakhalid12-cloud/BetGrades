@@ -16,6 +16,8 @@ export default function Home() {
   const [showAddBettorModal, setShowAddBettorModal] = useState(false)
   const [showAddBetModal, setShowAddBetModal] = useState(false)
   const [resultFilter, setResultFilter] = useState<string>('ALL')
+  const [isLoadingBettors, setIsLoadingBettors] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     fetchBettors()
@@ -31,11 +33,47 @@ export default function Home() {
   }, [selectedBettorId])
 
   const fetchBettors = async () => {
-    const res = await fetch('/api/bettors')
-    const data = await res.json()
-    setBettors(data)
-    if (data.length > 0 && !selectedBettorId) {
-      setSelectedBettorId(data[0].id)
+    setIsLoadingBettors(true)
+    setErrorMessage(null)
+    
+    try {
+      const res = await fetch('/api/bettors')
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'UNKNOWN_ERROR', detail: 'Failed to fetch bettors' }))
+        console.error('Error fetching bettors:', errorData)
+        
+        // Set bettors to empty array on error
+        setBettors([])
+        
+        // Show user-friendly error message
+        if (errorData.error === 'MISSING_DATABASE_URL') {
+          setErrorMessage('Database connection is not configured. Please check your environment variables.')
+        } else if (errorData.error === 'DB_ERROR') {
+          setErrorMessage('Database error: ' + (errorData.detail || 'Unable to connect to database'))
+        } else {
+          setErrorMessage('Failed to load bettors. Please try again later.')
+        }
+        
+        setIsLoadingBettors(false)
+        return
+      }
+
+      const data = await res.json()
+      
+      // Ensure data is an array before using it
+      const bettorsList = Array.isArray(data) ? data : []
+      setBettors(bettorsList)
+      
+      if (bettorsList.length > 0 && !selectedBettorId) {
+        setSelectedBettorId(bettorsList[0].id)
+      }
+    } catch (error) {
+      console.error('Error fetching bettors:', error)
+      setBettors([])
+      setErrorMessage('Network error: Unable to connect to the server.')
+    } finally {
+      setIsLoadingBettors(false)
     }
   }
 
@@ -156,21 +194,43 @@ export default function Home() {
           >
             + Add Bettor
           </button>
-          <div className="space-y-1">
-            {bettors.map((b) => (
+          {errorMessage && (
+            <div className="mb-4 p-3 bg-red-900 border border-red-700 rounded text-sm">
+              <div className="font-medium text-red-200 mb-1">Error</div>
+              <div className="text-red-300 text-xs">{errorMessage}</div>
               <button
-                key={b.id}
-                onClick={() => setSelectedBettorId(b.id)}
-                className={`w-full text-left px-3 py-2 rounded text-sm ${
-                  selectedBettorId === b.id
-                    ? 'bg-blue-600 text-white'
-                    : 'hover:bg-gray-700'
-                }`}
+                onClick={fetchBettors}
+                className="mt-2 text-xs text-red-200 hover:text-red-100 underline"
               >
-                {b.name}
+                Retry
               </button>
-            ))}
-          </div>
+            </div>
+          )}
+          {isLoadingBettors ? (
+            <div className="text-center text-gray-400 text-sm py-4">Loading...</div>
+          ) : (
+            <div className="space-y-1">
+              {Array.isArray(bettors) && bettors.length > 0 ? (
+                bettors.map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() => setSelectedBettorId(b.id)}
+                    className={`w-full text-left px-3 py-2 rounded text-sm ${
+                      selectedBettorId === b.id
+                        ? 'bg-blue-600 text-white'
+                        : 'hover:bg-gray-700'
+                    }`}
+                  >
+                    {b.name}
+                  </button>
+                ))
+              ) : (
+                <div className="text-center text-gray-400 text-sm py-4">
+                  {errorMessage ? 'No bettors available' : 'No bettors yet'}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
