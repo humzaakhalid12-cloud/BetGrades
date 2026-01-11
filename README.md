@@ -39,11 +39,31 @@ npm install
 
 ### 2. Set Up Database
 
-Create a `.env` file in the root directory with your PostgreSQL connection string:
+**IMPORTANT:** You must set the `DATABASE_URL` environment variable.
+
+**For local development:**
+Create a `.env` file in the root directory:
 
 ```bash
-DATABASE_URL="your-postgres-connection-string"
+DATABASE_URL="file:./prisma/dev.db"
 ```
+
+**For Vercel deployment:**
+1. Go to your Vercel project settings
+2. Navigate to Environment Variables
+3. Add `DATABASE_URL` with one of the following:
+   
+   **Option 1: Prisma Accelerate (Recommended for Vercel)**
+   ```
+   prisma+postgres://accelerate.prisma-data.net/?api_key=YOUR_API_KEY
+   ```
+   
+   **Option 2: Direct PostgreSQL**
+   ```
+   postgres://user:password@host:5432/database?sslmode=require
+   ```
+
+**Note:** SQLite (`file:./prisma/dev.db`) is for local development only. Vercel's serverless environment requires PostgreSQL or Prisma Accelerate.
 
 Generate Prisma client and run migrations:
 
@@ -149,8 +169,31 @@ Letter grades are assigned based on ROI:
 └── package.json
 ```
 
+## Vercel Deployment
+
+### Prerequisites
+1. Set `DATABASE_URL` environment variable in Vercel dashboard
+2. Use PostgreSQL (SQLite is dev-only and won't work on Vercel's serverless environment)
+
+### Build Configuration
+- The `postinstall` script automatically runs `prisma generate` during build
+- All API routes are configured for serverless deployment with `runtime = 'nodejs'` and `dynamic = 'force-dynamic'`
+- No additional build configuration needed
+
+### Environment Variables
+Add to Vercel project settings:
+- `DATABASE_URL`: Your PostgreSQL connection string (required)
+
+### Deployment Steps
+1. Push code to GitHub
+2. Connect repository to Vercel
+3. Add `DATABASE_URL` environment variable in Vercel dashboard
+4. Deploy
+
 ## Notes
 
+- **Local Development:** SQLite database stored in `prisma/dev.db` (gitignored)
+- **Production/Vercel:** Requires PostgreSQL (SQLite is not supported in serverless environments)
 - Database connection is configured via `DATABASE_URL` in `.env` file
 - The `.env` file is gitignored for security
 - No authentication or user accounts (single-user app)
@@ -166,6 +209,10 @@ Letter grades are assigned based on ROI:
 
 **Issue:** Port 3000 already in use
 - Solution: Kill the process using port 3000 or change the port in `package.json`
+
+**Issue:** Vercel build fails with "Failed to collect page data"
+- Solution: Ensure all API routes have `export const runtime = 'nodejs'` and `export const dynamic = 'force-dynamic'`
+- Ensure `DATABASE_URL` is set in Vercel environment variables
 
 ## License
 

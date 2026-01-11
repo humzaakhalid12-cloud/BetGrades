@@ -4,14 +4,18 @@ import { betSchema } from '@/lib/validations'
 import { calculateProfit } from '@/lib/utils'
 import { BetResult } from '@/lib/types'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     // Verify bettor exists
     const bettor = await prisma.bettor.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!bettor) {
@@ -33,7 +37,7 @@ export async function POST(
 
     const bet = await prisma.bet.create({
       data: {
-        bettorId: params.id,
+        bettorId: id,
         placedAt: new Date(validated.placedAt),
         description: validated.description,
         sport: validated.sport || null,

@@ -19,6 +19,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchBettors()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -45,14 +46,23 @@ export default function Home() {
   }
 
   const handleAddBettor = async (name: string, profileUrl: string) => {
-    const res = await fetch('/api/bettors', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, profileUrl }),
-    })
-    if (res.ok) {
-      await fetchBettors()
-      setShowAddBettorModal(false)
+    try {
+      const res = await fetch('/api/bettors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, profileUrl }),
+      })
+      if (res.ok) {
+        await fetchBettors()
+        setShowAddBettorModal(false)
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Failed to create bettor' }))
+        console.error('Error creating bettor:', errorData)
+        alert(`Error: ${errorData.error || 'Failed to create bettor'}`)
+      }
+    } catch (error) {
+      console.error('Error creating bettor:', error)
+      alert(`Error: ${error instanceof Error ? error.message : 'Failed to create bettor'}`)
     }
   }
 
@@ -525,21 +535,37 @@ function AddBettorModal({
   const [name, setName] = useState('')
   const [profileUrl, setProfileUrl] = useState('')
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsSubmitting(true)
 
     if (!name.trim()) {
       setError('Name is required')
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!profileUrl.trim()) {
+      setError('Profile URL is required')
+      setIsSubmitting(false)
       return
     }
 
     try {
-      new URL(profileUrl)
-      onSave(name.trim(), profileUrl.trim())
-    } catch {
-      setError('Please enter a valid URL')
+      new URL(profileUrl.trim())
+      try {
+        await onSave(name.trim(), profileUrl.trim())
+        // Success - modal will close automatically
+      } catch (saveError) {
+        setError(saveError instanceof Error ? saveError.message : 'Failed to save bettor')
+        setIsSubmitting(false)
+      }
+    } catch (urlError) {
+      setError('Please enter a valid URL (e.g., https://example.com)')
+      setIsSubmitting(false)
     }
   }
 
@@ -580,9 +606,10 @@ function AddBettorModal({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save
+              {isSubmitting ? 'Saving...' : 'Save'}
             </button>
           </div>
         </form>

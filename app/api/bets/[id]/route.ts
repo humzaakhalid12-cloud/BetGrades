@@ -4,6 +4,9 @@ import { calculateProfit } from '@/lib/utils'
 import { BetResult } from '@/lib/types'
 import { z } from 'zod'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 const betUpdateSchema = z.object({
   description: z.string().optional(),
   sport: z.string().optional().nullable(),
@@ -16,15 +19,16 @@ const betUpdateSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const body = await request.json()
     const validated = betUpdateSchema.parse(body)
 
     // Get existing bet to calculate new profit
     const existingBet = await prisma.bet.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!existingBet) {
@@ -55,7 +59,7 @@ export async function PATCH(
     )
 
     const bet = await prisma.bet.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     })
 
@@ -77,11 +81,12 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     await prisma.bet.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })
