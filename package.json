@@ -10,10 +10,11 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "rm -f prisma/dev.db prisma/dev.db-journal && npm run db:migrate && npm run db:seed"
+    "db:reset": "npx prisma migrate reset --force && npm run db:seed"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "dotenv": "^17.2.3",
     "next": "14.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

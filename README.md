@@ -21,13 +21,13 @@ A simple betting diary web application for tracking bettors and their bets. Buil
 - **Framework:** Next.js 14+ (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
-- **Database:** SQLite via Prisma ORM
+- **Database:** PostgreSQL via Prisma ORM
 - **Charts:** Recharts
 
 ## Prerequisites
 
 - Node.js 18+ and npm
-- No external database required (uses local SQLite)
+- PostgreSQL database (configured via DATABASE_URL in .env file)
 
 ## Setup Instructions
 
@@ -38,6 +38,12 @@ npm install
 ```
 
 ### 2. Set Up Database
+
+Create a `.env` file in the root directory with your PostgreSQL connection string:
+
+```bash
+DATABASE_URL="your-postgres-connection-string"
+```
 
 Generate Prisma client and run migrations:
 
@@ -145,8 +151,8 @@ Letter grades are assigned based on ROI:
 
 ## Notes
 
-- All data is stored locally in `prisma/dev.db`
-- The database file is gitignored (you can commit it if needed)
+- Database connection is configured via `DATABASE_URL` in `.env` file
+- The `.env` file is gitignored for security
 - No authentication or user accounts (single-user app)
 - No Twitter/X integration (manual entry only)
 
