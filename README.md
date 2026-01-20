@@ -27,9 +27,51 @@ A simple betting diary web application for tracking bettors and their bets. Buil
 ## Prerequisites
 
 - Node.js 18+ and npm
-- PostgreSQL database (configured via DATABASE_URL in .env file)
+- PostgreSQL database (for Vercel deployment) or SQLite (for local development)
 
-## Setup Instructions
+## Local Setup (Quick Start)
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Set Up Local Database (SQLite)
+
+Create a `.env` file in the root directory:
+
+```bash
+DATABASE_URL="file:./prisma/dev.db"
+```
+
+You can copy from the example file:
+```bash
+cp .env.example .env
+```
+
+### 3. Generate Prisma Client and Run Migrations
+
+```bash
+npm run db:generate
+npm run db:migrate
+```
+
+### 4. (Optional) Seed Sample Data
+
+```bash
+npm run db:seed
+```
+
+### 5. Start Development Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Setup Instructions (Detailed)
 
 ### 1. Install Dependencies
 
@@ -41,14 +83,14 @@ npm install
 
 **IMPORTANT:** You must set the `DATABASE_URL` environment variable.
 
-**For local development:**
+**For local development (SQLite):**
 Create a `.env` file in the root directory:
 
 ```bash
 DATABASE_URL="file:./prisma/dev.db"
 ```
 
-**For Vercel deployment:**
+**For Vercel deployment (PostgreSQL):**
 1. Go to your Vercel project settings
 2. Navigate to Environment Variables
 3. Add `DATABASE_URL` with one of the following:
